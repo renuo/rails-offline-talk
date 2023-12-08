@@ -126,19 +126,11 @@ layout: two-cols-header
 
 ---
 
-# Use Cases
-- Background data synchronization.
-- Caching resources for offline use.
-- Hooks for background services.
-- Performance enhancements like navigation preloading.
-
----
-
 # Registering Service Workers
 - Service Worker
 - Companion script
 
-```js{2,19,20|3-6,14-16|8-44}
+```js{all|5-7}
 // companion_script.ts
 const registerServiceWorker = async () => {
   if ('serviceWorker' in navigator) {
@@ -163,14 +155,28 @@ registerServiceWorker()
 
 ---
 
-# Step 1: Service Worker
-Diagram of the network first approach to caching
+# Network first approach to caching
 
 <img src="https://miro.medium.com/v2/resize:fit:1400/format:webp/0*5l-2aP5-sWYjjnY0.png" width="600px">
 
 ---
 
-```js{3}
+# Intercepting requests
+1. `fetch` is called by the client when loading a page / asset / performing ajax call.
+2. `fetch` event is intercepted by service worker.
+3. `event.respondWith` responds with a response object, either from cache or nettwork.
+4. `CacheManager` is a custom abstraction of the service worker APIs.
+5. `v1` is the cache name.
+6. `cacheManager.retrieveOrStore(event)` handles the network first Caching
+
+```js
+FetchEvent:
++ request
++ respondWith()
++ waitUntil()
+```
+
+```js
 const cacheManager = new CacheManager('v1')
 
 self.addEventListener('fetch', (event) => {
@@ -180,7 +186,9 @@ self.addEventListener('fetch', (event) => {
 
 ---
 
-# Step 1: Filter the request
+# Filtering requests
+- Chrome extensions cannot be cached
+- POST / PUT / PATCH requests should not be cached
 ```js
   async retrieveOrStore({ request }) {
     const filters = [
@@ -197,7 +205,8 @@ self.addEventListener('fetch', (event) => {
 
 ---
 
-# Step 2: Attempt to retrieve the request from the network
+# Retrieving response from the network
+Also cache the responses...
 
 ```js
   async retrieveOrStore({ request }) {
@@ -214,10 +223,13 @@ self.addEventListener('fetch', (event) => {
 
 ---
 
-# Step 3: Attempt to retrieve the response from the cache
+# Falling back to cache
+
+What if the response is not present in the cache?
 
 ```js
   async retrieveOrStore({ request }) {
+      ...
       const cachedResponse = await this.getFromCache(request)
       if (cachedResponse) {
         return cachedResponse
@@ -232,8 +244,6 @@ self.addEventListener('fetch', (event) => {
 
 ---
 
-
----
 
 ```js
 class CacheManager {
@@ -317,28 +327,43 @@ self.addEventListener('fetch', (event) => {
 ```
 
 ---
-mdc: true
+layout: cover
 ---
 
-# Problems with service workers
-## Service worker installed but not controlling the page
+# Problems
+Some problems with service workers I encountered while developing "Vogelhuesli"
+1. Service worker installed but not intercepting requests
+1. Activated but not working until page reload
+1. Resource is present in the cache, but is not being retrieved
+
+---
+
+# Installed but not intercepting requests
 https://felixgerschau.com/service-worker-lifecycle-update/
 
-1. Before clients.claim()
-![](https://felixgerschau.com/static/db3e6b65c7440c80a6124e7b4a9f34f5/29007/service-worker-not-controlling.png){width=200px lazy}
-1. After clients.claim()
-![](https://felixgerschau.com/static/515778442fc0bfe8424b6b64f608c5ab/29007/service-worker-controlling.png){width=500px}
+```
+self.addEventListener("install", (event) => {
+self.skipWaiting()
+  event.waitUntil(clients.claim());
+})
+```
+
+clients.claim()
+affects first-page visit.
+
+1. Before clients.claim() and skipWaiting()
+<img src="https://felixgerschau.com/static/db3e6b65c7440c80a6124e7b4a9f34f5/29007/service-worker-not-controlling.png" width="500px">
+1. After clients.claim() and skipWaiting()
+<img src="https://felixgerschau.com/static/515778442fc0bfe8424b6b64f608c5ab/29007/service-worker-controlling.png" width="500px">
 
 ---
 
-# Problems with service workers
-## Service worker activated but not installing
-skipWaiting()
+# Activated but not working until page load
 
 ---
 
-# Problems with service workers
-## Service worker intercepting requests but not caching
+# Resource present, response absent
+Service worker intercepting requests but not caching
 skipWaiting()
 
 ---
