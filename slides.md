@@ -154,10 +154,47 @@ registerServiceWorker()
 ```
 
 ---
+layout: two-cols-header
+---
 
 # Network first approach to caching
+What is this approach about and why should we use it?
 
-<img src="https://miro.medium.com/v2/resize:fit:1400/format:webp/0*5l-2aP5-sWYjjnY0.png" width="600px">
+::left::
+
+**Pros**
+
+- No need for cache invalidation
+- Resources are always up to date
+- It is simple to implement
+
+**Cons**
+
+- Heavier network usage
+- Is not suitable for all resources
+
+::right::
+
+<img src="https://miro.medium.com/v2/resize:fit:1400/format:webp/0*5l-2aP5-sWYjjnY0.png" width="500px">
+
+---
+
+# Implementing the Service Worker
+This is my implementation of the service worker for the "Vogelhuesli" project.
+
+```js
+class CacheManager {
+  constructor(cacheName, fallbackUrl) {...}
+
+  async putToCache(request, response) {...}
+
+  async getFromCache(request) {...}
+
+  async retrieveOrStore(event) {...}
+}
+
+const cacheManager = new CacheManager('v1', '/offline_fallback')
+```
 
 ---
 
@@ -228,102 +265,20 @@ Also cache the responses...
 What if the response is not present in the cache?
 
 ```js
-  async retrieveOrStore({ request }) {
-      ...
-      const cachedResponse = await this.getFromCache(request)
-      if (cachedResponse) {
-        return cachedResponse
-      }
-
-      const fallbackResponse = await this.getFromCache(this.fallbackUrl)
-      if (fallbackResponse) return fallbackResponse
-
-      return new Response({status: 503})
-  }
-```
-
----
-
-
-```js
-class CacheManager {
-  cacheName = 'v1'
-
-  constructor(cacheName, fallbackUrl) {
-    this.cacheName = cacheName
-    this.fallbackUrl = fallbackUrl
-  }
-
-  async putToCache(request, response) {
-    console.log('[Serviceworker]', 'Putting to cache!', request.url)
-    const cache = await caches.open(this.cacheName)
-    return cache.put(request, response)
-  }
-
-  async getFromCache(request) {
-    const cache = await caches.open(this.cacheName)
-    const matchOptions = {
-      ignoreSearch: true,
-      ignoreVary: true,
-      ignoreFragment: true,
-    }
-    return cache.match(request, matchOptions)
-  }
-
-  async retrieveOrStore({ request, preloadResponsePromise }) {
-    console.log('[Serviceworker]', 'Retrieving or storing!', request.url)
-    const filters = [
-      (url) => /api.mapbox.com.+vector\.pbf/.test(url),
-      (url) => url.startsWith('chrome-extension://'),
-      (url) => url.endsWith('/connection_check'),
-    ]
-
-    if (request.method !== 'GET' || filters.some((filter) => filter(request.url))) {
-      console.log('[Serviceworker]', 'Ignoring!', request.url)
-      return fetch(request)
-    }
-
-    const preloadResponse = await preloadResponsePromise
-    if (preloadResponse) {
-      console.log('[Serviceworker]', 'Preload response!', request.url)
-      await this.putToCache(request, preloadResponse.clone())
-      return preloadResponse
-    }
-
-    try {
-      if (self.emulateOfflineState) throw new Error('Emulating offline state!')
-      console.log('[ServiceWorker]', 'not emulating offline!!')
-
-      const networkResponse = await fetch(request)
-      await this.putToCache(request, networkResponse.clone())
-      return networkResponse
-    } catch (error) {
-      const cachedResponse = await this.getFromCache(request)
-      if (cachedResponse) {
-        console.log('[Serviceworker]', 'Found in cache!', request.url)
-        return cachedResponse
-      }
-      console.log('[Serviceworker]', 'Cache miss!', request.url)
-
-      const fallbackResponse = await this.getFromCache(this.fallbackUrl)
-      if (fallbackResponse) return fallbackResponse
-
-      throw new Error('fallback not cached!')
-    }
-  }
-}
-
-const cacheManager = new CacheManager('v1', '/offline_fallback')
-
-self.addEventListener('install', (event) => {
+  async retrieveOrStore({ request })
     ...
-})
+    } catch (error) {
+        const cachedResponse = await this.getFromCache(request)
+        if (cachedResponse) {
+            return cachedResponse
+        }
 
-self.addEventListener('fetch', (event) => {
-  console.log('[Serviceworker]', 'Fetching!', event, event.request.url)
-  event.respondWith(cacheManager.retrieveOrStore(event))
-  cacheManager.logCacheContents()
-})
+        const fallbackResponse = await this.getFromCache(this.fallbackUrl)
+        if (fallbackResponse) return fallbackResponse
+
+        return new Response({status: 503})
+    }
+}
 ```
 
 ---
@@ -333,45 +288,79 @@ layout: cover
 # Problems
 Some problems with service workers I encountered while developing "Vogelhuesli"
 1. Service worker installed but not intercepting requests
-1. Activated but not working until page reload
 1. Resource is present in the cache, but is not being retrieved
+1. Testing?
 
 ---
 
 # Installed but not intercepting requests
 https://felixgerschau.com/service-worker-lifecycle-update/
 
-```
+`clients.claim()`
+affects first-page visit.
+
+```js
 self.addEventListener("install", (event) => {
-self.skipWaiting()
+  self.skipWaiting()
   event.waitUntil(clients.claim());
 })
 ```
 
-clients.claim()
-affects first-page visit.
-
-1. Before clients.claim() and skipWaiting()
+Before:
 <img src="https://felixgerschau.com/static/db3e6b65c7440c80a6124e7b4a9f34f5/29007/service-worker-not-controlling.png" width="500px">
-1. After clients.claim() and skipWaiting()
+After:
 <img src="https://felixgerschau.com/static/515778442fc0bfe8424b6b64f608c5ab/29007/service-worker-controlling.png" width="500px">
 
 ---
 
-# Activated but not working until page load
+# Resource present, response absent
+Service worker cache seems to include the resource, but does not retrieve it when offline.
+
+Troubleshooting:
+Logging the cache keys and the cache contents.
+
+```js
+  async retrieveOrStore({ request }) {
+    ...
+    const cacheKeys = await caches.keys()
+    console.log('cacheKeys', cacheKeys)
+    const cache = await caches.open(this.cacheName)
+    const cacheContents = await cache.keys()
+    console.log('cacheContents', cacheContents)
+    ...
+  }
+```
+
+The problem:
+- The headers of the response (for resource preloading at least) were different from the headers of the request.
+- The service worker was not able to match the request with the response.
 
 ---
 
 # Resource present, response absent
-Service worker intercepting requests but not caching
-skipWaiting()
+Service worker cache seems to include the resource, but does not retrieve it when offline.
+
+Solution:
+- Use less restrictive cache matching options
+
+```js
+  async getFromCache(request) {
+    const cache = await caches.open(this.cacheName)
+    const matchOptions = {
+      ignoreSearch: true,
+      ignoreVary: true,
+      ignoreFragment: true,
+    }
+    return cache.match(request, matchOptions)
+  }
+```
 
 ---
 layout: intro
 ---
 
 # Problem #2
-As a user, I want to be able to preload pages, I might use in the future when in offline mode
+As a user, I want to be able to preload pages, I might use in the future when in offline mode.
 
 **Solution:**
 
