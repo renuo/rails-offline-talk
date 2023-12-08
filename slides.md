@@ -18,7 +18,6 @@ Short beertalk by Daniel
 - You might be interested in implementing offline mode yourself.
 - Your clients might need to use the application in bad internet conditions.
 - You want to learn something about request / response caching?
-- You like JavaScript, pain and suffering.
 
 ---
 
@@ -29,7 +28,6 @@ Based on my experience with Offline mode for the "Vogelhuesli" project
 1. Preloading of views
 1. Submiting forms when offline
 1. Task syncing when online
-1. Updating views
 1. Testing
 
 
@@ -51,7 +49,6 @@ As a user, I want to be able to access the page in offline mode, after visiting 
 ## Service Worker API
 - https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
 - navigator.serviceWorker.register(...)
-- install event
 - fetch event
 
 ## Browser cache APIs
@@ -97,7 +94,7 @@ layout: two-cols
 ---
 layout: two-cols-header
 ---
-# Imporant events
+# Important events
 
 ::left::
 
@@ -106,12 +103,10 @@ layout: two-cols-header
 
 **Installation**
   - Precache static assets / essential resources
-  - Self-skip waiting
 
 **Activation**
   - Cache management (delete old caches)
   - Update client data
-  - Claim clients -> take control of all open client pages instead of waiting for reload.
 
 ::right::
 
@@ -122,13 +117,10 @@ layout: two-cols-header
 
 **Message**
   - Communication between client and service worker
-  - Background sync
 
 ---
 
 # Registering Service Workers
-- Service Worker
-- Companion script
 
 ```js{all|5-7}
 // companion_script.ts
@@ -201,9 +193,7 @@ const cacheManager = new CacheManager('v1', '/offline_fallback')
 # Intercepting requests
 1. `fetch` is called by the client when loading a page / asset / performing ajax call.
 2. `fetch` event is intercepted by service worker.
-3. `event.respondWith` responds with a response object, either from cache or nettwork.
-4. `CacheManager` is a custom abstraction of the service worker APIs.
-5. `v1` is the cache name.
+3. `event.respondWith` responds with a response object, either from cache or network.
 6. `cacheManager.retrieveOrStore(event)` handles the network first Caching
 
 ```js
@@ -285,11 +275,10 @@ What if the response is not present in the cache?
 layout: cover
 ---
 
-# Problems
+# Service Worker problems
 Some problems with service workers I encountered while developing "Vogelhuesli"
 1. Service worker installed but not intercepting requests
 1. Resource is present in the cache, but is not being retrieved
-1. Testing?
 
 ---
 
@@ -320,14 +309,12 @@ Troubleshooting:
 Logging the cache keys and the cache contents.
 
 ```js
-  async retrieveOrStore({ request }) {
-    ...
+  async logCacheContents() {
     const cacheKeys = await caches.keys()
     console.log('cacheKeys', cacheKeys)
     const cache = await caches.open(this.cacheName)
     const cacheContents = await cache.keys()
     console.log('cacheContents', cacheContents)
-    ...
   }
 ```
 
@@ -347,9 +334,7 @@ Solution:
   async getFromCache(request) {
     const cache = await caches.open(this.cacheName)
     const matchOptions = {
-      ignoreSearch: true,
       ignoreVary: true,
-      ignoreFragment: true,
     }
     return cache.match(request, matchOptions)
   }
@@ -382,13 +367,7 @@ module RouteHelper
       ]
     end
 
-    location_paths = lambda do |location|
-      [
-        location_path(location),
-        edit_location_path(location),
-        new_location_observation_path(location)
-      ]
-    end
+    location_paths = lambda { |location| ... }
 
     route_paths = [
       route_path(route),
@@ -408,6 +387,9 @@ end
 ```
 
 ---
+
+# Action view
+This is a code snippet from the _route_list_item.html.erb partial.
 
 ```erb{4,12-16}
 <div class="accordion-item"
@@ -431,6 +413,9 @@ end
 ```
 
 ---
+
+# Stimulus controller
+This is the stimulus controller for the route item.
 
 ```ts{4-6,14-16}
 import { Controller } from '@hotwired/stimulus'
@@ -481,7 +466,18 @@ As a user, I want to be able to submit forms while offline, so that I don't have
 
 ---
 
+# What is IndexedDB?
+- Like local storage but for storing records
+- Structured like a database with tables and indexes
+- Key-value store
+- Asynchronous API
+- https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
+- Large storage capacity
+
+---
+
 # Define the IndexedDB
+Why are we using Dexie.js?
 
 ```ts
 import Dexie from 'dexie'
@@ -506,6 +502,8 @@ export default database
 ```
 ---
 
+# Define the stimulus controller
+
 ```ts{all|10-14}
 import { Controller } from '@hotwired/stimulus'
 import Mustache from 'mustache'
@@ -525,6 +523,8 @@ export default class extends Controller<HTMLFormElement> {
 ```
 
 ---
+
+# Intercept the submit event
 
 ```ts{all|4|8,9,14|10,15,17|12,16,19,20}
 export default class extends Controller<HTMLFormElement> {
@@ -576,6 +576,8 @@ export default class extends Controller<HTMLFormElement> {
 
 ---
 
+# Store the request in the IndexedDB
+
 ```ts{all|4-9,16-18|11|13}
 export default class extends Controller<HTMLFormElement> {
   ...
@@ -610,12 +612,149 @@ export default class extends Controller<HTMLFormElement> {
 ---
 
 # Problem 4
-As a user, I want to be able to sync submited forms when I am back online, so that my forms get sent and the data gets stored.
+As a user, I want to be able to sync submitted forms when I am back online, so that my forms get sent and the data gets stored.
 
 **Solution:**
 - Offline mode controller
+- Offline sync controller for individual sync items
 - List of all sync tasks from the indexedDB
 - Buttons for syncing / removing sync items
 - Feedback when items get synced / requests fail
 
 ---
+
+# Sync item controller
+- Import necessary modules and types
+- Declare target elements (`syncButtonTarget` and `removeButtonTarget`)
+- Declare value `itemId` of type `number`
+- Implement static method `updateSyncButton`
+- Implement `connect` method
+- Implement `onSync` method
+- Implement `onRemove` method
+- Implement private method `sendRequest`
+- Implement private method `deleteRequestQueueItem`
+- Implement private method `removeElement`
+- Implement private method `getRequestQueueItem`
+- Implement private method `updateSyncButton`
+
+---
+
+# Item syncing
+Deserialize request queue items, retrieve relevant data and perform fetch request
+
+```ts
+private sendRequest(item: RequestQueueItem) {
+    const formData = new FormData()
+    Object.entries(JSON.parse(data) as Record<string, string>).forEach((element) => {
+        const [key, value] = element
+        formData.append(key, value)
+    })
+    return fetch(url, {
+        method,
+        headers: {
+            'X-CSRF-Token': token,
+            credentials: 'include',
+        },
+        body: formData,
+    })
+}
+```
+---
+layout: cover
+---
+
+# How to test offline functionality?
+The better question is how to properly emulate offline mode for selenium specs...
+
+---
+
+# Testing offline mode
+
+```ruby
+module Helpers
+  module Offline
+    def enter_offline_mode
+      page.driver.browser.network_conditions = { offline: true, latency: 0, throughput: 0 }
+      page.evaluate_script('navigator.serviceWorker.controller.postMessage("EMULATE_OFFLINE")')
+    end
+
+    def exit_offline_mode
+      page.driver.browser.network_conditions = { offline: false, latency: 0, throughput: 0 }
+      page.evaluate_script('navigator.serviceWorker.controller.postMessage("STOP_EMULATING_OFFLINE")')
+    end
+
+    def wait_for_service_worker
+      timer_end = Time.zone.now + 5
+      while page.evaluate_script('navigator.serviceWorker.controller').nil?
+        sleep(0.1)
+        if Time.zone.now > timer_end
+          raise 'Service worker not found'
+        end
+      end
+    end
+  end
+end
+```
+
+---
+
+# Testing offline mode
+Message event listener in the service worker to emulate offline mode
+
+```js
+
+self.addEventListener('message', (event) => {
+  console.log('[Serviceworker]', 'Message!', event)
+  switch (event.data) {
+    case 'CLEAR_CACHE':
+      cacheManager.clearCache()
+      break
+    case 'EMULATE_OFFLINE':
+      self.emulateOfflineState = true
+      break
+    case 'STOP_EMULATING_OFFLINE':
+      self.emulateOfflineState = false
+      break
+    default:
+      throw new Error(`Unknown message: ${event.data}`)
+  }
+})
+
+```
+---
+
+# Testing offline mode
+Emulate offline mode in the service worker
+
+```js
+...
+try {
+    if (self.emulateOfflineState) throw new Error('Emulating offline state!')
+    console.log('[ServiceWorker]', 'not emulating offline!!')
+
+    const networkResponse = await fetch(request)
+    await this.putToCache(request, networkResponse.clone())
+    return networkResponse
+} catch (error) {
+...
+```
+---
+
+# Final thoughts
+- Service workers are a powerful tool for offline mode
+- They can be used to cache resources, intercept requests and handle background sync
+- They are not easy to implement and require a lot of testing
+- They are not supported by all browsers
+- You can emulate `offline` mode with service worker state and messages
+
+## Topics not discussed in this talk:
+- Background sync
+- Preloading of static resources
+- Preloading of fingerprinted resources
+- Cache invalidation
+- Parallel service workers
+
+---
+
+# Thank you for your attention!
+Have a nice day!
