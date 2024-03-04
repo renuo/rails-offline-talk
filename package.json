@@ -15,6 +15,7 @@
     "markdown-it-mdc": "^0.1.4",
     "slidev-theme-dracula": "^0.2.0",
     "slidev-theme-eloc": "^1.0.2",
+    "slidev-theme-the-unnamed": "^0.0.15",
     "slidev-theme-zhozhoba": "^1.0.0"
   }
 }

@@ -1,15 +1,29 @@
 ---
 layout: cover
+theme: the-unnamed
 company: Renuo AG
 date: 08.12.2023
 author: Daniel
 ---
 
-# Offline Mode in Rails
+# Adapting Ruby on Rails for the Offline User Experience
 
-A guide on how to use IndexedDB, Service Workers and Stimulus
+<!-- A guide on how to use IndexedDB, Service Workers and Stimulus -->
 
-Short beertalk by Daniel
+Created by Daniel Bengl @ Renuo
+
+---
+layout: about-me
+
+helloMsg: Hello!
+name: Daniel Bengl
+imageSrc: 4CFBBE4B-ACB5-42CD-8458-7B445BD16CF0_1_105_c.jpeg
+job: Software Engineering IMS Intern
+line1: 
+line2: 
+social1: github.com/CuddlyBunion341
+social2: reddit.com/user/CuddlyBunion341
+---
 
 ---
 
@@ -62,7 +76,7 @@ layout: quote
 
 # What is a service worker?
 
-<!-- > A service worker is an event-driven worker registered against an origin and a path. It takes the form of a JavaScript file that can control the web-page/site that it is associated with, intercepting and modifying navigation and resource requests, and caching resources in a very granular fashion to give you complete control over how your app behaves in certain situations (the most obvious one being when the network is not available).\ -->
+<!-- > A service worker ios an event-driven worker registered against an origin and a path. It takes the form of a JavaScript file that can control the web-page/site that it is associated with, intercepting and modifying navigation and resource requests, and caching resources in a very granular fashion to give you complete control over how your app behaves in certain situations (the most obvious one being when the network is not available).\ -->
 <!-- > https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API -->
 
 - Background JavaScript file in a web browser.
