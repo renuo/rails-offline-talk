@@ -8,112 +8,111 @@ author: Daniel
 
 # Adapting Ruby on Rails for the Offline User Experience
 
-<!-- A guide on how to use IndexedDB, Service Workers and Stimulus -->
-
 Created by Daniel Bengl @ Renuo
 
 ---
 layout: about-me
 
-helloMsg: Hello!
-name: Daniel Bengl
+helloMsg: Hello There!
+name: Daniel Bengl (19)
 imageSrc: 4CFBBE4B-ACB5-42CD-8458-7B445BD16CF0_1_105_c.jpeg
 job: Software Engineering IMS Intern
 line1: 
 line2: 
 social1: github.com/CuddlyBunion341
 social2: reddit.com/user/CuddlyBunion341
+social3: youtube.com/@cuddlybunion3416
+---
+---
+layout: two-cols
 ---
 
----
+# About Vogelhuesli
 
-# Why should YOU care?
+- Birdhouse management system for Nature Association Degersheim
 
-- You might be interested in implementing offline mode yourself.
-- Your clients might need to use the application in bad internet conditions.
-- You want to learn something about request / response caching?
+**Technologies**
+- Ruby on Rails + Stimulus
+- Active Storage with S3
+- Mapbox
+- CanCanCan
 
----
+**Features**
+- Management of Birdhouse locations
+- Management of Birdhouse routes
+- Management of Birdhouse observations 
 
-# Problems and Solutions
-Based on my experience with Offline mode for the "Vogelhuesli" project
+::right::
 
-1. Caching already visited views
-1. Preloading of views
-1. Submiting forms when offline
-1. Task syncing when online
-1. Testing
-
-
----
-layout: intro
----
-
-# Problem #1
-As a user, I want to be able to access the page in offline mode, after visiting it in the past
-
-**Solution:**
-
-- Use a service worker to intercept outgoing HTTP requests and store them in the browser cache
-- Retrieve the cached response, if connection to the server cannot be established
-
----
-
-# Tech
-## Service Worker API
-- https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
-- navigator.serviceWorker.register(...)
-- fetch event
-
-## Browser cache APIs
-- [https://developer.mozilla.org/en-US/docs/Web/API/Cache](https://developer.mozilla.org/en-US/docs/Web/API/Cache)
-- Cache.match(request, options)
-- Cache.put(request, response)
-
----
-layout: quote
----
-
-# What is a service worker?
-
-<!-- > A service worker ios an event-driven worker registered against an origin and a path. It takes the form of a JavaScript file that can control the web-page/site that it is associated with, intercepting and modifying navigation and resource requests, and caching resources in a very granular fashion to give you complete control over how your app behaves in certain situations (the most obvious one being when the network is not available).\ -->
-<!-- > https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API -->
-
-- Background JavaScript file in a web browser.
-- Acts as a proxy, intercepting network requests.
-- Enables caching, offline capabilities, and performance improvements.
-- Handles push notifications and event listening. 
-
+<div style="position: absolute; top: -100px">
+  <img src="4072F617-543B-4290-8C36-C3847AD6316A_1_102_a.jpeg">
+</div>
 
 ---
 layout: two-cols
 ---
 
-# Service Worker life cycle
 
-<h1 style="display: none;"></h1>
-<p>PWA Essentials: Introduction to Service Workers - Techglimpse</p>
+# Problems and Solutions
 
-<img src="https://techglimpse.com/wp-content/uploads/2019/11/PWA-Service-Worker-Life-Cycle.png" style="width: 300px">
+Based on the offline requirements for Vogelhüsli.
+
+1. Caching already-visited views
+1. Preloading of views
+1. Submiting forms when offline
+1. Synchronizing progress when back online
+1. Capybara testing
 
 ::right::
-# Break down
 
-1. Registration: Register service worker with `navigator.serviceWorker.register(scriptURL, options)`
-2. Installation: Installation event is emited by the service worker
-3. Activation: The service worker is activated
-4. Idle: The service worker is active and ready to intercept requests
-5. Fetch: Intercept a fetch request, return the response
+<div style="position: absolute; top: -100px;">
+  <img style="height: 100vh; object-fit: cover;" src="https://images.unsplash.com/photo-1558022103-603c34ab10ce?q=80&w=3271&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">
+</div>
 
 ---
-layout: two-cols-header
+layout: section
 ---
-# Important events
 
-::left::
+# Caching already-visited views
+
+*"As a user, I want to be able to access the page in offline mode after visiting it in the past"*
+
+- Use a service worker to intercept outgoing HTTP requests and store them in the browser cache
+- Retrieve the cached response if the connection to the server cannot be established
+
+**Service Worker API**
+- https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
+- navigator.serviceWorker.register(...)
+- fetch event
+
+**Browser cache APIs**
+- [https://developer.mozilla.org/en-US/docs/Web/API/Cache](https://developer.mozilla.org/en-US/docs/Web/API/Cache)
+- Cache.match(request, options)
+- Cache.put(request, response)
+
+---
+layout: center
+---
+
+# What is a service worker?
+
+<br>
+
+- Background script in a web browser.
+- Acts as a proxy, intercepting network requests.
+- Enables caching, offline capabilities, and performance improvements.
+- Handles push notifications and event listening. 
+
+<!-- > A service worker ios an event-driven worker registered against an origin and a path. It takes the form of a JavaScript file that can control the web-page/site that it is associated with, intercepting and modifying navigation and resource requests, and caching resources in a very granular fashion to give you complete control over how your app behaves in certain situations (the most obvious one being when the network is not available).\
+> https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API -->
+
+---
+layout: two-cols
+---
+# Important SW events
 
 **Registration**
-  - Browser is informed about the existence and the script location of the service worker.
+  - The Browser is informed about the service worker's existence and script location.
 
 **Installation**
   - Precache static assets / essential resources
@@ -126,7 +125,7 @@ layout: two-cols-header
 
 **Fetch**
   - Cache-first Strategy: Check if resource is in cache, fetch from network otherwise.
-  - Network-first Strategy: Attempt to fetch ressource from network and cache, refer to cache otherwise.
+  - **Network-first Strategy: Attempt to fetch ressource from network and cache, refer to cache otherwise.**
   - Offline Fallback Strategy: Respond with predefined fallback / custom offline page when cache and network is unavailable.
 
 **Message**
@@ -136,7 +135,7 @@ layout: two-cols-header
 
 # Registering Service Workers
 
-```js{all|5-7}
+```js{all}
 // companion_script.ts
 const registerServiceWorker = async () => {
   if ('serviceWorker' in navigator) {
@@ -144,13 +143,6 @@ const registerServiceWorker = async () => {
       const registration = await navigator.serviceWorker.register('/service-worker.js', {
         scope: '/',
       })
-      if (registration.installing) {
-        console.log('Service worker installing')
-      } else if (registration.waiting) {
-        console.log('Service worker installed')
-      } else if (registration.active) {
-        console.log('Service worker active')
-      }
     } catch (error) {
       console.error(`Registration failed with ${error}`)
     }
@@ -355,7 +347,7 @@ Solution:
 ```
 
 ---
-layout: intro
+layout: section
 ---
 
 # Problem #2
@@ -466,7 +458,7 @@ export default class RouteItemController extends Controller<HTMLDivElement> {
 ```
 
 ---
-layout: intro
+layout: section
 ---
 
 # Problem #3
@@ -482,11 +474,13 @@ As a user, I want to be able to submit forms while offline, so that I don't have
 
 # What is IndexedDB?
 - Like local storage but for storing records
-- Structured like a database with tables and indexes
+- Structured like a database with tables and indicies
 - Key-value store
-- Asynchronous API
-- https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
+- Terrible Asynchronous API
 - Large storage capacity
+- Persistent storage
+- Service Worker accesibility
+- https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
 
 ---
 
@@ -771,4 +765,12 @@ try {
 ---
 
 # Thank you for your attention!
-Have a nice day!
+Have a nice rest of the day!
+
+---
+
+# Sources
+- https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps
+- https://alicia-paz.medium.com/make-your-rails-app-work-offline-part-1-pwa-setup-3abff8666194
+- https://alicia-paz.medium.com/make-your-rails-app-work-offline-part-2-caching-assets-and-adding-an-offline-fallback-334729ade904
+- https://alicia-paz.medium.com/make-your-rails-app-work-offline-part-3-crud-actions-with-indexeddb-and-stimulus-ad669fe0141c
