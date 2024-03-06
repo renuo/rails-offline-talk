@@ -3,7 +3,7 @@ layout: cover
 theme: the-unnamed
 company: Renuo AG
 date: 08.12.2023
-author: Daniel
+author: Daniel Bengl
 ---
 
 # Adapting Ruby on Rails for the Offline User Experience
@@ -59,7 +59,7 @@ Based on the offline requirements for Vogelhüsli.
 
 1. Caching already-visited views
 1. Preloading of views
-1. Submiting forms when offline
+1. Offline form submission
 1. Synchronizing progress when back online
 1. Capybara testing
 
@@ -275,7 +275,7 @@ layout: two-cols
 ---
 
 # 2. Preloading of views
-*"As a user, I want to be able to preload pages, I might use in the future when in offline mode."*
+*"As a walker, I want to be able to preload pages, I might use in the future when in offline mode."*
 
 **Solution:**
 
@@ -359,11 +359,10 @@ layout: full
 ```
 
 ---
+layout: full
+---
 
-# Stimulus controller
-This is the stimulus controller for the route item.
-
-```ts{4-6,14-16}
+```ts{1-99|4-6,14-16|27-30}{maxHeight:'100%'}
 import { Controller } from '@hotwired/stimulus'
 
 export default class RouteItemController extends Controller<HTMLDivElement> {
@@ -398,11 +397,12 @@ export default class RouteItemController extends Controller<HTMLDivElement> {
 ```
 
 ---
-layout: section
+layout: two-cols
 ---
 
-# Problem #3
-As a user, I want to be able to submit forms while offline, so that I don't have to wait for internet connection.
+<h1 style="max-width: 69%;">3. Offline Form Submission</h1>
+
+*"As a walker, I want to be able to submit forms when offline, so that I can create observations in bad network conditions.*
 
 **Solution:**
 
@@ -410,6 +410,8 @@ As a user, I want to be able to submit forms while offline, so that I don't have
 - Create a 'RequestQueueItem' table in the IndexedDB if not already present.
 - Serialize the formdata and save it to the database.
 
+::right::
+<img src="image.png" style="position: absolute; top: -100px;">
 ---
 
 # What is IndexedDB?
@@ -558,9 +560,11 @@ export default class extends Controller<HTMLFormElement> {
 ```
 
 ---
+layout: two-cols
+---
 
-# Problem 4
-As a user, I want to be able to sync submitted forms when I am back online, so that my forms get sent and the data gets stored.
+# 4. Synchronisation
+*"As a user, I want to be able to sync submitted forms when I am back online, so that my forms get sent and the data gets stored."*
 
 **Solution:**
 - Offline mode controller
@@ -569,21 +573,11 @@ As a user, I want to be able to sync submitted forms when I am back online, so t
 - Buttons for syncing / removing sync items
 - Feedback when items get synced / requests fail
 
----
+::right::
 
-# Sync item controller
-- Import necessary modules and types
-- Declare target elements (`syncButtonTarget` and `removeButtonTarget`)
-- Declare value `itemId` of type `number`
-- Implement static method `updateSyncButton`
-- Implement `connect` method
-- Implement `onSync` method
-- Implement `onRemove` method
-- Implement private method `sendRequest`
-- Implement private method `deleteRequestQueueItem`
-- Implement private method `removeElement`
-- Implement private method `getRequestQueueItem`
-- Implement private method `updateSyncButton`
+<img src="CleanShot 2024-03-06 at 00.52.45@2x-1.png" style="height: 25%; overflow: hidden; width: 100%; object-fit: cover; object-position: center top;">
+
+![alt text](<CleanShot 2024-03-06 at 00.56.58@2x.png>)
 
 ---
 
@@ -607,16 +601,10 @@ private sendRequest(item: RequestQueueItem) {
     })
 }
 ```
----
-layout: cover
----
-
-# How to test offline functionality?
-The better question is how to properly emulate offline mode for selenium specs...
 
 ---
 
-# Testing offline mode
+# 5. Testing: RSpec Helpers
 
 ```ruby
 module Helpers
@@ -646,7 +634,7 @@ end
 
 ---
 
-# Testing offline mode
+# 5. Testing: Service Worker Messages
 Message event listener in the service worker to emulate offline mode
 
 ```js
@@ -671,7 +659,7 @@ self.addEventListener('message', (event) => {
 ```
 ---
 
-# Testing offline mode
+# 5. Testing: Simulating Offline Mode in Service Worker
 Emulate offline mode in the service worker
 
 ```js
@@ -689,18 +677,18 @@ try {
 ---
 
 # Final thoughts
+- Offline mode can be easy, depending on the scope
 - Service workers are a powerful tool for offline mode
 - They can be used to cache resources, intercept requests and handle background sync
 - They are not easy to implement and require a lot of testing
-- They are not supported by all browsers
 - You can emulate `offline` mode with service worker state and messages
 
 ## Topics not discussed in this talk:
+- Service Worker Lifecycle
 - Background sync
 - Preloading of static resources
 - Preloading of fingerprinted resources
 - Cache invalidation
-- Parallel service workers
 
 ---
 
