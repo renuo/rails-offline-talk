@@ -29,24 +29,27 @@ layout: two-cols
 
 # About Vogelhuesli
 
-- Birdhouse management system for Nature Association Degersheim
+- Birdhouse management system for nature association Degersheim
 
 **Technologies**
-- Ruby on Rails + Stimulus
+- Ruby on Rails with Stimulus & TypeScript
 - Active Storage with S3
 - Mapbox
 - CanCanCan
 
 **Features**
-- Management of Birdhouse locations
-- Management of Birdhouse routes
-- Management of Birdhouse observations 
+- Management of birdhouse routes
+- Management of birdhouse locations
+- Management of birdhouse observations 
 
 ::right::
 
 <div style="position: absolute; top: -100px">
   <img src="4072F617-543B-4290-8C36-C3847AD6316A_1_102_a.jpeg">
 </div>
+
+<!-- Vogelhuesli is the application is the application I have adapted to offline usage and would like to use as an example for this Beertalk -->
+<!-- There are some other features beyond these 3 I listed but these are the foundational ones I needed to make offline usable -->
 
 ---
 layout: two-cols
@@ -55,13 +58,20 @@ layout: two-cols
 
 # Problems and Solutions
 
-Based on the offline requirements for Vogelhüsli.
+Based on the offline requirements for Vogelhüsli
 
 1. Caching already-visited views
 1. Preloading of views
 1. Offline form submission
 1. Synchronizing progress when back online
 1. Capybara testing
+
+**Tradeoffs**
+
+- Offline tasks are shown on one view only
+- Manual synchronization
+- Works best with WiFi turned off
+
 
 ::right::
 
@@ -71,61 +81,39 @@ Based on the offline requirements for Vogelhüsli.
 
 ---
 
-# 1. Caching already-visited views
+# 1. Caching Already-Visited Views
 
 *"As a user, I want to be able to access the page in offline mode after visiting it in the past"*
 
-- Use a service worker to intercept outgoing HTTP requests and store them in the browser cache
-- Retrieve the cached response if the connection to the server cannot be established
+- Intercept and cache outgoing HTTP requests with Service Workers
+- Caching approaches
 
 **Service Worker API**
-- navigator.serviceWorker.register(...)
-- fetch event
+- `navigator.serviceWorker.register(...)`
+- `fetch` event
 
 **Browser cache APIs**
-- Cache.match(request, options)
-- Cache.put(request, response)
+- `Cache.match(request, options)`
+- `Cache.put(request, response)`
 
 ---
-layout: section
----
 
-# What is a service worker?
+# Network-First Approach to Caching
 
-<br>
+What is this approach about and why should we use it?
 
-- Background script in a web browser.
-- Acts as a proxy, intercepting network requests.
-- Enables caching, offline capabilities, and performance improvements.
-- Handles push notifications and event listening. 
+**Pros**
 
-<!-- > A service worker ios an event-driven worker registered against an origin and a path. It takes the form of a JavaScript file that can control the web-page/site that it is associated with, intercepting and modifying navigation and resource requests, and caching resources in a very granular fashion to give you complete control over how your app behaves in certain situations (the most obvious one being when the network is not available).\
-> https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API -->
+- No need for cache invalidation
+- Resources are always up to date
+- It is simple to implement
 
----
-layout: two-cols
----
-# Important SW events
+**Cons**
 
-**Registration**
-  - The Browser is informed about the service worker's existence and script location.
+- Heavier network usage
+- Is not suitable for all resources
 
-**Installation**
-  - Precache static assets / essential resources
-
-**Activation**
-  - Cache management (delete old caches)
-  - Update client data
-
-::right::
-
-**Fetch**
-  - Cache-first Strategy: Check if resource is in cache, fetch from network otherwise.
-  - Network-first Strategy: Attempt to fetch ressource from network and cache, refer to cache otherwise.
-  - Offline Fallback Strategy: Respond with predefined fallback / custom offline page when cache and network is unavailable.
-
-**Message**
-  - Communication between client and service worker
+<img class="absolute" src="https://miro.medium.com/v2/resize:fit:1400/format:webp/0*5l-2aP5-sWYjjnY0.png" alt="medium" width="500px" style="right: 40px; top: 35%; position: absolute">
 
 ---
 
@@ -149,27 +137,8 @@ registerServiceWorker()
 
 ---
 
-# Network first approach to caching
-
-What is this approach about and why should we use it?
-
-**Pros**
-
-- No need for cache invalidation
-- Resources are always up to date
-- It is simple to implement
-
-**Cons**
-
-- Heavier network usage
-- Is not suitable for all resources
-
-<img class="absolute" src="https://miro.medium.com/v2/resize:fit:1400/format:webp/0*5l-2aP5-sWYjjnY0.png" alt="medium" width="500px" style="right: 40px; top: 35%; position: absolute">
-
----
-
 # Implementing the Service Worker
-This is my implementation of the service worker for the "Vogelhuesli" project.
+This is my implementation of the service worker for the "Vogelhuesli" project
 
 https://vogelhuesli.renuoapp.ch/service-worker.js
 
@@ -187,13 +156,15 @@ class CacheManager {
 const cacheManager = new CacheManager('v1', '/offline_fallback')
 ```
 
+- Or use a library like https://developer.chrome.com/docs/workbox
+
 ---
 
-# Intercepting requests
+# Intercepting Requests
 1. `fetch` is called by the client when loading a page / asset / performing ajax call.
 2. `fetch` event is intercepted by service worker.
 3. `event.respondWith` responds with a response object, either from cache or network.
-6. `cacheManager.retrieveOrStore(event)` handles the network first Caching
+6. `cacheManager.retrieveOrStore(event)` handles the network-first caching
 
 ```js
 FetchEvent:
@@ -212,13 +183,15 @@ self.addEventListener('fetch', (event) => {
 
 ---
 
-# Filtering requests
+# Filtering Requests
 - Chrome extensions cannot be cached
-- POST / PUT / PATCH requests should not be cached
+- Mapbox tiles get cached automatically
+- POST / PUT / PATCH / DELETE requests should not be cached
 ```js
   async retrieveOrStore({ request }) {
     const filters = [
       (url) => url.startsWith('chrome-extension://'),
+      (url) => /api.mapbox.com.+vector\.pbf/.test(url),
       ...
     ]
 
@@ -231,7 +204,7 @@ self.addEventListener('fetch', (event) => {
 
 ---
 
-# Retrieving response from the network
+# Retrieving Response from the Network
 Also cache the responses...
 
 ```js
@@ -249,7 +222,7 @@ Also cache the responses...
 
 ---
 
-# Falling back to cache
+# Falling-Back to Cache
 
 What if the response is not present in the cache?
 
@@ -274,7 +247,7 @@ What if the response is not present in the cache?
 layout: two-cols
 ---
 
-# 2. Preloading of views
+# 2. Preloading of Views
 *"As a walker, I want to be able to preload pages, I might use in the future when in offline mode."*
 
 **Solution:**
@@ -299,39 +272,6 @@ layout: two-cols
 ::right::
 
 ![alt text](<CleanShot 2024-03-06 at 00.30.45@2x.png>)
-
----
-layout: full
----
-
-```ruby
-module RouteHelper
-  def preload_route_paths(route)
-    observation_paths = lambda do |observation|
-      [
-        observation_path(observation),
-        edit_observation_path(observation)
-      ]
-    end
-
-    location_paths = lambda { |location| ... }
-
-    route_paths = [
-      route_path(route),
-      edit_route_path(route),
-      new_route_location_path(route)
-    ]
-
-    [
-      *route_paths,
-      *route.locations.flat_map { |location| location_paths.call(location) },
-      *route.locations.includes(:observations).flat_map do |location|
-        location.observations.flat_map(&observation_paths)
-      end
-    ]
-  end
-end
-```
 
 ---
 layout: full
@@ -412,22 +352,24 @@ layout: two-cols
 
 ::right::
 <img src="image.png" style="position: absolute; top: -100px;">
+
+<!-- Dormice -->
+
 ---
 
 # What is IndexedDB?
+- https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
 - Like local storage but for storing records
 - Structured like a database with tables and indicies
-- Key-value store
 - Terrible Asynchronous API
 - Large storage capacity
 - Persistent storage
 - Service Worker accesibility
-- https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
 
 ---
 
 # Define the IndexedDB
-Why are we using Dexie.js?
+Why are we using Dexie.js again?
 
 ```ts
 import Dexie from 'dexie'
@@ -677,7 +619,7 @@ try {
 ---
 
 # Final thoughts
-- Offline mode can be easy, depending on the scope
+- Offline mode can be "easy", depending on the scope
 - Service workers are a powerful tool for offline mode
 - They can be used to cache resources, intercept requests and handle background sync
 - They are not easy to implement and require a lot of testing
