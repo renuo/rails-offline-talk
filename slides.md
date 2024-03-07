@@ -21,7 +21,7 @@ line1:
 line2: 
 social1: github.com/CuddlyBunion341
 social2: reddit.com/user/CuddlyBunion341
-social3: youtube.com/@cuddlybunion3416
+social3: youtube.com/@cuddlybunion341
 ---
 ---
 layout: two-cols
