@@ -302,7 +302,7 @@ layout: full
 layout: full
 ---
 
-```ts{1-99|4-6,14-16|27-30}{maxHeight:'100%'}
+```ts{1-99|4-6,14-16|27-30}{maxheight:'100%'}
 import { Controller } from '@hotwired/stimulus'
 
 export default class RouteItemController extends Controller<HTMLDivElement> {
@@ -394,7 +394,7 @@ export default database
 ```
 ---
 
-# Define the stimulus controller
+# Define the Stimulus Controller
 
 ```ts{all|10-14}
 import { Controller } from '@hotwired/stimulus'
@@ -416,7 +416,7 @@ export default class extends Controller<HTMLFormElement> {
 
 ---
 
-# Intercept the submit event
+# Intercept the Submit Event
 
 ```ts{all|4|8,9,14|10,15,17|12,16,19,20}
 export default class extends Controller<HTMLFormElement> {
@@ -601,7 +601,7 @@ self.addEventListener('message', (event) => {
 ```
 ---
 
-# 5. Testing: Simulating Offline Mode in Service Worker
+# 5. Testing: Simulating Offline Mode
 Emulate offline mode in the service worker
 
 ```js
@@ -618,14 +618,14 @@ try {
 ```
 ---
 
-# Final thoughts
+# Final Thoughts
 - Offline mode can be "easy", depending on the scope
 - Service workers are a powerful tool for offline mode
-- They can be used to cache resources, intercept requests and handle background sync
-- They are not easy to implement and require a lot of testing
+- SWs can be used to cache resources, intercept requests and handle background sync
+- SWs are not easy to implement and require a lot of testing
 - You can emulate `offline` mode with service worker state and messages
 
-## Topics not discussed in this talk:
+**Topics not discussed in this talk**
 - Service Worker Lifecycle
 - Background sync
 - Preloading of static resources
@@ -635,12 +635,4 @@ try {
 ---
 
 # Thank you for your attention!
-Have a nice rest of the day!
-
----
-
-# Sources
-- https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps
-- https://alicia-paz.medium.com/make-your-rails-app-work-offline-part-1-pwa-setup-3abff8666194
-- https://alicia-paz.medium.com/make-your-rails-app-work-offline-part-2-caching-assets-and-adding-an-offline-fallback-334729ade904
-- https://alicia-paz.medium.com/make-your-rails-app-work-offline-part-3-crud-actions-with-indexeddb-and-stimulus-ad669fe0141c
+<img src="memecat.png" style="height: 80%;">
